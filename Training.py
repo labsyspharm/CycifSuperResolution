@@ -84,13 +84,13 @@ def pipeline(args):
     if args.is_test_run:
         trainer = lp.trainer.Trainer(callbacks=set_callbacks(args),
                                  accelerator="gpu",
-                                 gpus=args.gpu_string,
+                                 devices=args.gpu_string,
                                  distributed_backend="ddp2")
     else:
         trainer = lp.trainer.Trainer(logger=lp.loggers.TensorBoardLogger(args.tensorboard_path, name=args.title),
                                  callbacks=set_callbacks(args),
                                  accelerator="gpu",
-                                 gpus=args.gpu_string,
+                                 devices=args.gpu_string,
                                  distributed_backend="ddp2")
 
     model = CycifSuperResolutionModel(args)
@@ -121,4 +121,3 @@ def parse_args():
 if __name__ == "__main__":
     args = parse_args()
     pipeline(args)
-    
