@@ -15,7 +15,7 @@ numpy.random.seed(1)
 
 class CycifSuperResolutionModel(lp.LightningModule):
     def __init__(self, args):
-        pass
+        super.__init__()
 
     def training_step(self, batch):
         x = self.model(batch)
