@@ -10,6 +10,7 @@ import torch
 import lightning.pytorch as lp
 numpy.random.seed(1)
 
+
 class CycifSuperResolutionModel(lp.LightningModule):
     def __init__(self, args):
         pass
@@ -63,6 +64,7 @@ class CustomDataloader(torch.utils.data.Dataset):
 
         return x, y
 
+
 def set_callbacks(args):
     output = list()
 
@@ -74,6 +76,7 @@ def set_callbacks(args):
         output.append(lp.callbacks.LearningRateMonitor(logging_interval="step"))
 
     return output
+
 
 def pipeline(args):
     trainer = None
@@ -109,8 +112,8 @@ def parse_args():
 
     output = output.parse_args(sys.argv[1:])
 
-    if not os.path.exists(args.tensorboard_path):
-        os.makedirs(args.tensorboard_path, exist_ok=True)
+    if not os.path.exists(output.tensorboard_path):
+        os.makedirs(output.tensorboard_path, exist_ok=True)
 
     return output
 
@@ -118,3 +121,4 @@ def parse_args():
 if __name__ == "__main__":
     args = parse_args()
     pipeline(args)
+    
