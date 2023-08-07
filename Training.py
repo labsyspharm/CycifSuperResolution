@@ -4,6 +4,8 @@ import pickle
 import sys
 
 import lightning.pytorch.loggers
+import lightning.pytorch.strategies
+import lightning.pytorch.tuner
 import torch.utils.data
 import numpy.random
 import torch
@@ -85,13 +87,13 @@ def pipeline(args):
         trainer = lp.trainer.Trainer(callbacks=set_callbacks(args),
                                  accelerator="gpu",
                                  devices=args.gpu_string,
-                                 strategy="ddp2")
+                                 strategy="auto")
     else:
         trainer = lp.trainer.Trainer(logger=lp.loggers.TensorBoardLogger(args.tensorboard_path, name=args.title),
                                  callbacks=set_callbacks(args),
                                  accelerator="gpu",
                                  devices=args.gpu_string,
-                                 strategy="ddp2")
+                                 strategy="auto")
 
     model = CycifSuperResolutionModel(args)
 
