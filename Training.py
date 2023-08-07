@@ -85,13 +85,13 @@ def pipeline(args):
         trainer = lp.trainer.Trainer(callbacks=set_callbacks(args),
                                  accelerator="gpu",
                                  devices=args.gpu_string,
-                                 distributed_backend="ddp2")
+                                 strategy="ddp2")
     else:
         trainer = lp.trainer.Trainer(logger=lp.loggers.TensorBoardLogger(args.tensorboard_path, name=args.title),
                                  callbacks=set_callbacks(args),
                                  accelerator="gpu",
                                  devices=args.gpu_string,
-                                 distributed_backend="ddp2")
+                                 strategy="ddp2")
 
     model = CycifSuperResolutionModel(args)
 
