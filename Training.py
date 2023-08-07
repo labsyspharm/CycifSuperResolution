@@ -31,9 +31,10 @@ class CycifDataModule(lp.LightningDataModule):
     def __init__(self, args):
         all_files = os.listdir(os.path.join(args.input, "input"))
         numpy.random.shuffle(all_files)
-        train_f = args.frac_train * len(all_files)
+        train_f = int(args.frac_train * len(all_files))
         rest = (1 - args.frac_train)/2
         rest *= len(all_files)
+        rest = int(rest)
         self.base_path = args.input
         self.files_train = all_files[0:train_f]
         self.files_test = all_files[train_f:train_f+rest]
