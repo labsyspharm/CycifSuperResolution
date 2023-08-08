@@ -12,18 +12,48 @@ import utils
 
 class CycifSRModel(torch.nn.Module):
     def __init__(self):
-        super().__init__()
+        super(CycifSRModel, self).__init__()
 
-        self.conv1 = torch.nn.Conv2d(1, 1, 3, padding=1)
-        self.conv2 = torch.nn.Conv2d(1, 1, 3, padding=1)
+        self.conv1 = self._create_autoencoder()
+        self.conv2 = self._create_autoencoder()
 
     def forward(self, x):
         y = self.conv1(x)
-        y = torch.nn.ReLU()(y)
-        y = self.conv2(x)
-        y = torch.nn.ReLU()(y)
+        y = self.conv2(y)
 
         return y
+
+    def _create_down_block(self, i, o):
+        s1 = torch.nn.Conv2d(i, o, 3, padding=1)
+        s2 = torch.nn.MaxPool2d(kernel_size=2, stride=2)
+
+        return torch.nn.Sequential(s1, torch.nn.ReLU(), s2)
+
+    def _create_up_block(self, i, o, k=3):
+        s1 = torch.nn.ConvTranspose2d(in_channels=i, kernel_size=k, out_channels=o, stride=2)
+
+        return torch.nn.Sequential(s1, torch.nn.ReLU())
+
+    def _create_encoder(self):
+        s1 = self._create_down_block(1, 128)
+        s2 = self._create_down_block(128, 64)
+        s3 = self._create_down_block(64, 32)
+
+        return torch.nn.Sequential(s1, s2, s3)
+
+    def _create_decoder(self):
+        s1 = self._create_up_block(32, 32, k=2)
+        s2 = self._create_up_block(32, 64, k=2)
+        s3 = self._create_up_block(64, 128, k=2)
+
+        return torch.nn.Sequential(s1, s2, s3)
+
+    def _create_autoencoder(self):
+        s1 = self._create_encoder()
+        s2 = self._create_decoder()
+        s3 = torch.nn.Conv2d(128, 1, 3, padding=1)
+
+        return torch.nn.Sequential(s1, s2, s3)
 
 def parse_args():
     output = argparse.ArgumentParser()
