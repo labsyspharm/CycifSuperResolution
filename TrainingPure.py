@@ -50,7 +50,7 @@ def parse_args():
         os.makedirs(output.output)
 
     if output.tensorboard_dir is not None and not os.path.exists(os.path.join(output.tensorboard_dir)):
-        os.makedirs(output.tensorboard_dir)
+        os.makedirs(output.tensorboard_dir, exist_ok=True)
 
     return output
 
@@ -73,7 +73,7 @@ def main():
                                              batch_size=args.batch_size, shuffle=True, drop_last=True,
                                              )
 
-    optim = torch.optim.Adam(model.parameters(), lr=0.01)
+    optim = torch.optim.Adam(model.parameters(), lr=0.01,)
     lr = None
     tb = torch.utils.tensorboard.SummaryWriter(args.tensorboard_dir) if args.tensorboard_dir is not None else None
 
@@ -82,6 +82,7 @@ def main():
     if args.lr_annealing == "exp":
         lr = torch.optim.lr_scheduler.ExponentialLR(optimizer=optim, verbose=True, gamma=0.01)
     elif args.lr_annealing == "cyclic":
+        optim = torch.optim.SGD(model.parameters(), lr=0.01, momentum=0.9)
         lr = torch.optim.lr_scheduler.CyclicLR(optim, mode="exp_range", base_lr=0.00001, max_lr=0.01)
     elif args.lr_annealing == "plateau":
         lr = torch.optim.lr_scheduler.ReduceLROnPlateau(optimizer=optim, patience=4)
