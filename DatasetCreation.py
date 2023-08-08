@@ -14,7 +14,7 @@ def parse_args():
     output.add_argument("output", type=str, help="Path to store results")
     output.add_argument("--recursive", action="store_true", help="Iterate through directories.")
     output.add_argument("--file-suffix", type=str, help="Only select files with this sufix. For testing is \"stack.tif\"", default=None)
-    output.add_argument("--norm-type", choices=["std", "gauss"], help="How to normalize images.\nStd is bit normalization.\nGauss scales the image so the mean is `80% of bit range and then bit normalizes.", default="std")
+    output.add_argument("--norm-type", choices=["std", "gauss", "no"], help="How to normalize images.\nStd is bit normalization.\nGauss scales the image so the mean is `80% of bit range and then bit normalizes.", default="std")
     output.add_argument("--prefix", type=str, help="Prefix for generated files", default="")
     output.add_argument("--transformations", action="store_true", help="Do transformations to images")
 
@@ -70,18 +70,23 @@ def normalize(args, image):
 
         tif = (0.8 * 2 ** bits) * image / mean  # 80% of 16 bits is ~52000
         tif[tif > 2 ** bits] = 2 ** bits
-        return normalize_8_bit(tif.astype(dtype)) * 255.0
+        return normalize_8_bit(args, tif.astype(dtype)) * 255.0
+    elif args.norm_type == "no":
+        return image
 
 
 def handle_file(args, file_path):
     tiff = tifffile.imread(file_path)
+    if tiff.shape[-1] != 512:
+        print(file_path, "Not 512 actually", tiff.shape[-1])
+        return
 
     tiff = normalize(args, tiff)
 
     input_image = tiff[0]
 
     for i in range(1, len(tiff)):
-        save_combination(args, input_image, tiff[i], args.prefix + file_path.split("/")[-1] + "_" + str(i))
+        save_combination(args, input_image, tiff[i], args.prefix + "_" + str(i) + "_" + file_path.split("/")[-1])
 
     if args.transformations:
         # rotations
@@ -90,7 +95,12 @@ def handle_file(args, file_path):
             input_image = tiff[0]
 
             for i in range(1, len(tiff)):
-                save_combination(args, input_image, tiff[i], args.prefix + file_path.split("/")[-1] + "_rotated_" + str(rot) + "_" + str(i))
+                save_combination(args, input_image, tiff[i],
+                                 args.prefix + "_rotated_" + str(rot) + "_" + str(i) + "_" + file_path.split("/")[-1])
+                save_combination(args, numpy.flip(input_image, 0), numpy.flip(tiff[i], 0),
+                                 args.prefix + "_rotated_hflip_" + str(rot) + "_" + str(i) + "_" +  file_path.split("/")[-1])
+                save_combination(args, numpy.flip(input_image, 1), numpy.flip(tiff[i], 1),
+                                 args.prefix + "_rotated_vflip_" + str(rot) + "_" + str(i) + "_" +  file_path.split("/")[-1])
 
 
 def pipeline(args):

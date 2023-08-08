@@ -10,6 +10,9 @@ import torch.utils.data
 import numpy.random
 import torch
 import lightning.pytorch as lp
+
+from utils import CustomDataloader
+
 numpy.random.seed(1)
 
 
@@ -17,8 +20,15 @@ class CycifSuperResolutionModel(lp.LightningModule):
     def __init__(self, args):
         super.__init__()
 
+        self.model = torch.nn.Sequential(
+            torch.nn.Conv2d(1,3,2),
+            torch.nn.Sigmoid(),
+            torch.nn.Conv2d(3,1,2)
+        )
+
     def training_step(self, batch):
-        x = self.model(batch)
+        x, y = batch
+        x = self.model(x)
 
         return x
 
@@ -40,6 +50,8 @@ class CycifDataModule(lp.LightningDataModule):
         self.files_test = all_files[train_f:train_f+rest]
         self.files_val = all_files[train_f+rest:]
         self.batch_size = args.batch_size
+        self.prepare_data_per_node = False
+        self.allow_zero_length_dataloader_with_multiple_devices = True
 
     def train_dataloader(self):
         return CustomDataloader(self.base_path, self.files_train)
@@ -49,23 +61,6 @@ class CycifDataModule(lp.LightningDataModule):
 
     def val_dataloader(self):
         return CustomDataloader(self.base_path, self.files_val)
-
-
-class CustomDataloader(torch.utils.data.Dataset):
-    def __init__(self, base_path, files):
-        self.basepath = base_path
-        self.files = files
-
-    def __getitem__(self, item):
-        x, y = None, None
-
-        with open(os.path.join(self.basepath, "input", self.files[item]), "rb") as f:
-            x = pickle.load(f)
-
-        with open(os.path.join(self.basepath, "output", self.files[item]), "rb") as f:
-            y = pickle.load(f)
-
-        return x, y
 
 
 def set_callbacks(args):
@@ -88,7 +83,8 @@ def pipeline(args):
         trainer = lp.trainer.Trainer(callbacks=set_callbacks(args),
                                  accelerator="gpu",
                                  devices=args.gpu_string,
-                                 strategy="auto")
+                                 strategy=lp.strategies.SingleDeviceStrategy(device="cuda:" + args.gpu_string.split(",")[0])
+                                     )
     else:
         trainer = lp.trainer.Trainer(logger=lp.loggers.TensorBoardLogger(args.tensorboard_path, name=args.title),
                                  callbacks=set_callbacks(args),
