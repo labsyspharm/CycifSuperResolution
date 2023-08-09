@@ -82,6 +82,9 @@ def parse_args():
     if output.tensorboard_dir is not None and not os.path.exists(os.path.join(output.tensorboard_dir)):
         os.makedirs(output.tensorboard_dir, exist_ok=True)
 
+    if not os.path.exists(os.path.join(output.output, "models")):
+        os.makedirs(os.path.join(output.output, "models"), exist_ok=True)
+
     return output
 
 
