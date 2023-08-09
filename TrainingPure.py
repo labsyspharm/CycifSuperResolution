@@ -137,6 +137,8 @@ def main():
         if lr is not None:
             lr.step(loss_test)
 
+        torch.save(model, os.path.join(args.output, "models", "epoch_{}_loss_{}.pkl".format(epoch, loss_test)) )
+
 
 if __name__ == "__main__":
     main()
