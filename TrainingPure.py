@@ -1,5 +1,6 @@
 import argparse
 import os
+import pickle
 import sys
 
 import torch
@@ -19,6 +20,7 @@ class CycifSRModel(torch.nn.Module):
 
     def forward(self, x):
         y = self.conv1(x)
+
         y = self.conv2(y)
 
         return y
@@ -65,8 +67,13 @@ def parse_args():
     output.add_argument("--device", type=str, help="Device to use in training.", default="cuda:0")
     output.add_argument("--tensorboard-dir", type=str, help="Path to store tensorboard data. None if do not use tensorboard", default=None)
     output.add_argument("--epochs", type=int, default=100)
+    output.add_argument("--example-images", type=str, help="Example images to put in tensorboard log. None if no examples.", default=None)
 
     output = output.parse_args(sys.argv[1:])
+
+    if output.tensorboard_dir is None and output.example_images is not None:
+        print("Invalid parameter combination, if example-images is used you must give a tensorboard dir.")
+        sys.exit(1)
 
     if not os.path.exists(os.path.join(output.input, "input")):
         print("Input path does not contain \"input\" folder.")
@@ -127,6 +134,14 @@ def main():
         "tensorboard": tb
     }
 
+    if args.example_images is not None:  # if we have example data we add it as step -1?
+        for image in os.listdir(args.example_images):
+            with open(os.path.join(args.example_images, image), "rb") as f:
+                i = pickle.load(f)
+                i = torch.FloatTensor(i)
+                tb.add_image(image, i, -1)
+
+    first = True
     for epoch in tqdm.tqdm(range(args.epochs), desc="Epoch: "):
         loss_train = utils.training_loop(model, optim, dataloader_train, loss, epoch, **kwargs)
 
@@ -134,13 +149,20 @@ def main():
             loss_test = utils.testing_loop(model, dataloader_test, loss, epoch, **kwargs)
 
         if tb is not None:
-            tb.add_scalar("train/loss_sum", loss_train, epoch)
-            tb.add_scalar("test/loss_sum", loss_test, epoch)
+            tb.add_scalar("sum/train_loss", loss_train, epoch)
+            tb.add_scalar("sum/test_loss", loss_test, epoch)
 
         if lr is not None:
             lr.step(loss_test)
 
-        torch.save(model, os.path.join(args.output, "models", "epoch_{}_loss_{}.pkl".format(epoch, loss_test)) )
+        if first and tb is not None:
+            tb.add_graph(model, torch.FloatTensor(range(512*512)).reshape((1, 512, 512)))
+            first = False
+
+        torch.save(model, os.path.join(args.output, "models", "epoch_{}_loss_{}.pkl".format(epoch, loss_test)))
+
+        if args.example_images is not None:
+            utils.add_example_images(args, model, epoch, tb)
 
 
 if __name__ == "__main__":

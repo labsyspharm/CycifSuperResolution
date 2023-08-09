@@ -1,7 +1,7 @@
 import torch
 import os
 import pickle
-
+import torch.utils.tensorboard
 import tqdm
 
 
@@ -65,3 +65,10 @@ def testing_loop(model, dataloader, loss_fn, epoch_n=0, **kwargs):
     l /= (len(dataloader) * kwargs["batch_size"])
 
     return l
+
+
+def add_example_images(args, model, epoch, tb: torch.utils.tensorboard.SummaryWriter):
+    for image in os.listdir(args.example_images):
+        with open(os.path.join(args.example_images, image), "rb") as f:
+            i = pickle.load(f)
+            tb.add_image(image, model(i), epoch)
