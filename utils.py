@@ -8,10 +8,11 @@ import numpy
 
 
 class CustomDataloader(torch.utils.data.Dataset):
-    def __init__(self, base_path, files, device="cuda:0"):
+    def __init__(self, base_path, files, is_uint16, device="cuda:0"):
         self.basepath = base_path
         self.files = files
         self.device = device
+        self.uint16 = is_uint16
 
     def __getitem__(self, item):
         x, y = None, None
@@ -21,6 +22,10 @@ class CustomDataloader(torch.utils.data.Dataset):
 
         with open(os.path.join(self.basepath, "output", self.files[item]), "rb") as f:
             y = pickle.load(f)
+
+        if self.uint16:
+            x = x.astype(numpy.int32)
+            y = x.astype(numpy.int32)
 
         x = torch.FloatTensor(x).to(self.device).reshape((1, 512, 512))
         y = torch.FloatTensor(y).to(self.device).reshape((1, 512, 512))
@@ -74,7 +79,7 @@ def add_example_images(args, model, epoch, tb: torch.utils.tensorboard.SummaryWr
         with open(os.path.join(args.example_images, image), "rb") as f:
             i = pickle.load(f)
 
-            if args.is_u16int:
+            if args.is_uint16:
                 i = torch.FloatTensor(i.astype(numpy.array_api.int32))
             else:
                 i = torch.FloatTensor(i)

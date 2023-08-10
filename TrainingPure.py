@@ -109,15 +109,15 @@ def main():
     filenames = os.listdir(os.path.join(args.input, "input"))
 
     dataloader_train = torch.utils.data.DataLoader(
-        utils.CustomDataloader(args.input, filenames[0:int(0.9*len(filenames))], args.device),
+        utils.CustomDataloader(args.input, filenames[0:int(0.9*len(filenames))], args.is_uint16, args.device),
                                              batch_size=args.batch_size, shuffle=True, drop_last=True,
                                              )
     dataloader_test = torch.utils.data.DataLoader(
-        utils.CustomDataloader(args.input, filenames[int(0.9*len(filenames)):], args.device),
+        utils.CustomDataloader(args.input, filenames[int(0.9*len(filenames)):], args.is_uint16, args.device),
                                              batch_size=args.batch_size, shuffle=True, drop_last=True,
                                              )
 
-    optim = torch.optim.Adam(model.parameters(), lr=0.01,)
+    optim = torch.optim.Adam(model.parameters(), lr=0.01)
     lr = None
     tb = torch.utils.tensorboard.SummaryWriter(args.tensorboard_dir) if args.tensorboard_dir is not None else None
 
@@ -143,7 +143,7 @@ def main():
             with open(os.path.join(args.example_images, image), "rb") as f:
                 i = pickle.load(f)
 
-                if args.is_u16int:
+                if args.is_uint16:
                     i = torch.FloatTensor(i.astype(numpy.array_api.int32))
                 else:
                     i = torch.FloatTensor(i)
