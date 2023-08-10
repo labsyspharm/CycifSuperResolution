@@ -6,6 +6,7 @@ import sys
 import torch
 import torch.utils.data
 import torch.utils.tensorboard
+
 import tqdm
 
 import utils
@@ -21,7 +22,7 @@ class CycifSRModel(torch.nn.Module):
     def forward(self, x):
         y = self.conv1(x)
 
-        y = self.conv2(y)
+        #y = self.conv2(y)
 
         return y
 
@@ -156,7 +157,7 @@ def main():
             lr.step(loss_test)
 
         if first and tb is not None:
-            tb.add_graph(model, torch.FloatTensor(range(512*512)).reshape((1, 512, 512)))
+            tb.add_graph(model, torch.FloatTensor(range(512*512)).reshape((1, 512, 512)).to(args.device))
             first = False
 
         torch.save(model, os.path.join(args.output, "models", "epoch_{}_loss_{}.pkl".format(epoch, loss_test)))
