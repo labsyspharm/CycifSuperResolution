@@ -24,8 +24,11 @@ class CustomDataloader(torch.utils.data.Dataset):
             y = pickle.load(f)
 
         if self.uint16:
-            x = x.astype(numpy.int32)
-            y = x.astype(numpy.int32)
+            x = x.astype(numpy.int32) / 2**16
+            y = x.astype(numpy.int32) / 2**16
+        else:
+            x = x / 255
+            y = y / 255
 
         x = torch.FloatTensor(x).to(self.device).reshape((1, 512, 512))
         y = torch.FloatTensor(y).to(self.device).reshape((1, 512, 512))

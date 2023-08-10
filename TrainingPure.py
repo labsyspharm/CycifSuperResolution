@@ -57,7 +57,7 @@ class CycifSRModel(torch.nn.Module):
         s2 = self._create_decoder()
         s3 = torch.nn.Conv2d(128, 1, 3, padding=1)
 
-        return torch.nn.Sequential(s1, s2, s3)
+        return torch.nn.Sequential(s1, s2, s3, torch.nn.Sigmoid())
 
 def parse_args():
     output = argparse.ArgumentParser()
