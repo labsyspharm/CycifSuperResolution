@@ -3,6 +3,7 @@ import os
 import pickle
 import sys
 
+import numpy.array_api
 import torch
 import torch.utils.data
 import torch.utils.tensorboard
@@ -70,6 +71,7 @@ def parse_args():
     output.add_argument("--epochs", type=int, default=100)
     output.add_argument("--example-images", type=str, help="Example images to put in tensorboard log. None if no examples.", default=None)
     output.add_argument("--image-size", type=int, help="Size of squared input images.", default=512)
+    output.add_argument("--is-uint16", action="store_true", help="The input data is u16int type so code needs to adapt.")
 
     output = output.parse_args(sys.argv[1:])
 
@@ -140,7 +142,14 @@ def main():
         for image in os.listdir(args.example_images):
             with open(os.path.join(args.example_images, image), "rb") as f:
                 i = pickle.load(f)
-                i = torch.FloatTensor(i).reshape((1, args.image_size, args.image_size))
+
+                if args.is_u16int:
+                    i = torch.FloatTensor(i.astype(numpy.array_api.int32))
+                else:
+                    i = torch.FloatTensor(i)
+
+                i = i.reshape((1, args.image_size, args.image_size))
+
                 tb.add_image(image, i, -1)
 
     first = True

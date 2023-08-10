@@ -2,7 +2,9 @@ import torch
 import os
 import pickle
 import torch.utils.tensorboard
+import torch.utils.data
 import tqdm
+import numpy
 
 
 class CustomDataloader(torch.utils.data.Dataset):
@@ -71,5 +73,11 @@ def add_example_images(args, model, epoch, tb: torch.utils.tensorboard.SummaryWr
     for image in os.listdir(args.example_images):
         with open(os.path.join(args.example_images, image), "rb") as f:
             i = pickle.load(f)
+
+            if args.is_u16int:
+                i = torch.FloatTensor(i.astype(numpy.array_api.int32))
+            else:
+                i = torch.FloatTensor(i)
+
             i = torch.FloatTensor(i).to(args.device).reshape((1, args.image_size, args.image_size))
             tb.add_image(image, model(i), epoch)
