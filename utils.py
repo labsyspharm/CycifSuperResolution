@@ -71,4 +71,5 @@ def add_example_images(args, model, epoch, tb: torch.utils.tensorboard.SummaryWr
     for image in os.listdir(args.example_images):
         with open(os.path.join(args.example_images, image), "rb") as f:
             i = pickle.load(f)
+            i = torch.FloatTensor(i).to(args.device).reshape((1, args.image_size, args.image_size))
             tb.add_image(image, model(i), epoch)

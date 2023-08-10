@@ -69,6 +69,7 @@ def parse_args():
     output.add_argument("--tensorboard-dir", type=str, help="Path to store tensorboard data. None if do not use tensorboard", default=None)
     output.add_argument("--epochs", type=int, default=100)
     output.add_argument("--example-images", type=str, help="Example images to put in tensorboard log. None if no examples.", default=None)
+    output.add_argument("--image-size", type=int, help="Size of squared input images.", default=512)
 
     output = output.parse_args(sys.argv[1:])
 
@@ -139,7 +140,7 @@ def main():
         for image in os.listdir(args.example_images):
             with open(os.path.join(args.example_images, image), "rb") as f:
                 i = pickle.load(f)
-                i = torch.FloatTensor(i).reshape((1, 512, 512))
+                i = torch.FloatTensor(i).reshape((1, args.image_size, args.image_size))
                 tb.add_image(image, i, -1)
 
     first = True
@@ -157,7 +158,9 @@ def main():
             lr.step(loss_test)
 
         if first and tb is not None:
-            tb.add_graph(model, torch.FloatTensor(range(512*512)).reshape((1, 512, 512)).to(args.device))
+            tb.add_graph(model, torch.FloatTensor(
+                range(args.image_size*args.image_size)
+            ).reshape((1, args.image_size, args.image_size)).to(args.device))
             first = False
 
         torch.save(model, os.path.join(args.output, "models", "epoch_{}_loss_{}.pkl".format(epoch, loss_test)))
