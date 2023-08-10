@@ -139,7 +139,7 @@ def main():
         for image in os.listdir(args.example_images):
             with open(os.path.join(args.example_images, image), "rb") as f:
                 i = pickle.load(f)
-                i = torch.FloatTensor(i)
+                i = torch.FloatTensor(i).reshape((1, 512, 512))
                 tb.add_image(image, i, -1)
 
     first = True
