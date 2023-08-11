@@ -87,5 +87,5 @@ def add_example_images(args, model, epoch, tb: torch.utils.tensorboard.SummaryWr
             else:
                 i = torch.FloatTensor(i)
 
-            i = torch.FloatTensor(i).to(args.device).reshape((1, args.image_size, args.image_size))
-            tb.add_image(image, model(i) * 255, epoch, dataformats="CHW")
+            i = torch.FloatTensor(i).to(args.device)
+            tb.add_image(image, model(i) * 255, epoch, dataformats="HW")

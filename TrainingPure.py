@@ -149,9 +149,7 @@ def main():
                 else:
                     i = torch.FloatTensor(i)
 
-                i = i.reshape((1, args.image_size, args.image_size))
-
-                tb.add_image(image, i, -1, dataformats="CHW")
+                tb.add_image(image, i, -1, dataformats="HW")
 
     first = True
     for epoch in tqdm.tqdm(range(args.epochs), desc="Epoch: "):
