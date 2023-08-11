@@ -3,7 +3,7 @@ import os
 import pickle
 import sys
 
-import numpy.array_api
+import numpy
 import torch
 import torch.utils.data
 import torch.utils.tensorboard
@@ -144,13 +144,14 @@ def main():
                 i = pickle.load(f)
 
                 if args.is_uint16:
-                    i = torch.FloatTensor(i.astype(numpy.array_api.int32))
+                    i = torch.FloatTensor(i.astype(numpy.array_api.int32)) / 2**16
+                    i *= 255
                 else:
                     i = torch.FloatTensor(i)
 
                 i = i.reshape((1, args.image_size, args.image_size))
 
-                tb.add_image(image, i, -1)
+                tb.add_image(image, i, -1, dataformats="CHW")
 
     first = True
     for epoch in tqdm.tqdm(range(args.epochs), desc="Epoch: "):
