@@ -5,7 +5,10 @@ import sys
 import os
 import pickle
 import numpy
+import torch
+import torchvision.transforms
 import tqdm
+from PIL import Image
 
 def parse_args():
     output = argparse.ArgumentParser()
@@ -17,6 +20,7 @@ def parse_args():
     output.add_argument("--norm-type", choices=["std", "gauss", "no"], help="How to normalize images.\nStd is bit normalization.\nGauss scales the image so the mean is `80% of bit range and then bit normalizes.", default="std")
     output.add_argument("--prefix", type=str, help="Prefix for generated files", default="")
     output.add_argument("--transformations", action="store_true", help="Do transformations to images")
+    output.add_argument("--output-format", choices=["pickle", "PIL"], help="Output format to save the dataset.", default="pickle")
 
     output = output.parse_args(sys.argv[1:])
 
@@ -34,12 +38,17 @@ def parse_args():
 
 
 def save_combination(args, input_image, output_image, name):
-    with open(os.path.join(args.output, "input", name), "wb") as f:
-        pickle.dump(input_image, f)
+    input_path = os.path.join(args.output, "input", name)
+    output_path = os.path.join(args.output, "output", name)
+    if args.output_format == "pickle":
+        with open(input_path, "wb") as f:
+            pickle.dump(input_image, f)
 
-    with open(os.path.join(args.output, "output", name), "wb") as f:
-        pickle.dump(output_image, f)
-
+        with open(output_path, "wb") as f:
+            pickle.dump(output_image, f)
+    elif args.output_format == "PIL":
+        Image.fromarray(input_image.astype(numpy.uint8)).save(input_path + ".png")
+        Image.fromarray(output_image.astype(numpy.uint8)).save(output_path + ".png")
 
 def normalize_8_bit(args, image):
     if image.dtype == numpy.int8 or image.dtype == numpy.uint8:
@@ -85,8 +94,9 @@ def handle_file(args, file_path):
 
     input_image = tiff[0]
 
-    for i in range(1, len(tiff)):
-        save_combination(args, input_image, tiff[i], args.prefix + "_" + str(i) + "_" + file_path.split("/")[-1])
+    for i in range(1, 6):  # channels 1-5 are defocus and saturation the rest are cytoplasm channel
+        save_combination(args, input_image, tiff[i],
+                         "_".join([args.prefix, str(i), file_path.split("/")[-1]]))
 
     if args.transformations:
         # rotations
@@ -96,11 +106,11 @@ def handle_file(args, file_path):
 
             for i in range(1, len(tiff)):
                 save_combination(args, input_image, tiff[i],
-                                 args.prefix + "_rotated_" + str(rot) + "_" + str(i) + "_" + file_path.split("/")[-1])
+                                 "_".join([args.prefix, "rotated", str(rot), str(i), file_path.split("/")[-1]]))
                 save_combination(args, numpy.flip(input_image, 0), numpy.flip(tiff[i], 0),
-                                 args.prefix + "_rotated_hflip_" + str(rot) + "_" + str(i) + "_" +  file_path.split("/")[-1])
+                                 "_".join([args.prefix, "rotated_hflip", str(rot), str(i), file_path.split("/")[-1]]))
                 save_combination(args, numpy.flip(input_image, 1), numpy.flip(tiff[i], 1),
-                                 args.prefix + "_rotated_vflip_" + str(rot) + "_" + str(i) + "_" +  file_path.split("/")[-1])
+                                 "_".join([args.prefix, "rotated_vflip", str(rot), str(i), file_path.split("/")[-1]]))
 
 
 def pipeline(args):
@@ -121,4 +131,5 @@ def pipeline(args):
 
 if __name__ == "__main__":
     args = parse_args()
+    print(args)
     pipeline(args)
